@@ -1,1 +1,1 @@
-# netcup-dyndns
+# Netcup DynDNS

@@ -1,0 +1,8 @@
+{
+  "name": "@tiaskel/netcup-dyndns",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:Tiaskel/netcup-dyndns.git",
+  "author": "Frederik Metko <frederik.metko@gmail.com>",
+  "license": "MIT"
+}
