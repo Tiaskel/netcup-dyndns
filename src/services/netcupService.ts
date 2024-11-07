@@ -1,4 +1,4 @@
-type Action = 'login' | 'logout'
+type Action = 'login' | 'logout' | 'infoDnsZone'
 
 type Status = 'error' | 'started' | 'pending' | 'warning' | 'success'
 
@@ -15,6 +15,16 @@ type ApiResponse<T = { [key: string]: string }> = {
 
 type LoginResponseData = {
     apisessionid: string
+}
+
+type DnsZoneResponseData = {
+    name: string
+    ttl: string
+    serial: string
+    refresh: string
+    retry: string
+    expire: string
+    dnssecstatus: boolean
 }
 
 export default class NetcupService {
@@ -57,10 +67,10 @@ export default class NetcupService {
             apipassword: apiPassword,
         }
         const response = await this.callApi<LoginResponseData>('login', payload)
-        if(response) {
-            return response.responsedata.apisessionid
+        if(!response) {
+            return false
         }
-        return false
+        return response.responsedata.apisessionid
     }
 
     async endSession(customerNumber: string, apiKey: string, apiSessionId: string): Promise<boolean> {
@@ -73,4 +83,16 @@ export default class NetcupService {
         return !!response
     }
 
+
+    async getDnsZoneInfo(domainName: string, customerNumber: string, apiKey: string, apiSessionId: string): Promise<DnsZoneResponseData | false> {
+        const payload = {
+            domainname: domainName,
+            customernumber: customerNumber,
+            apikey: apiKey,
+            apisessionid: apiSessionId,
+        }
+        const response = await this.callApi<DnsZoneResponseData>('infoDnsZone', payload)
+        if(!response) return false
+        return response.responsedata
+    }
 }
