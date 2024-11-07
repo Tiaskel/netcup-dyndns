@@ -1,4 +1,4 @@
-type Action = 'login' | 'logout' | 'infoDnsZone'
+type Action = 'login' | 'logout' | 'infoDnsZone' | 'infoDnsRecords'
 
 type Status = 'error' | 'started' | 'pending' | 'warning' | 'success'
 
@@ -25,6 +25,20 @@ type DnsZoneResponseData = {
     retry: string
     expire: string
     dnssecstatus: boolean
+}
+
+type DnsRecord = {
+    id: string
+    hostname: string
+    type: string
+    priority: string
+    destination: string
+    deleterecord: boolean
+    state: 'yes' | 'no'
+}
+
+type DnsRecordsResponseData = {
+    dnsrecords: DnsRecord[]
 }
 
 export default class NetcupService {
@@ -92,6 +106,18 @@ export default class NetcupService {
             apisessionid: apiSessionId,
         }
         const response = await this.callApi<DnsZoneResponseData>('infoDnsZone', payload)
+        if(!response) return false
+        return response.responsedata
+    }
+
+    async getDnsRecordsInfo(domainName: string, customerNumber: string, apiKey: string, apiSessionId: string): Promise<DnsRecordsResponseData | false> {
+        const payload = {
+            domainname: domainName,
+            customernumber: customerNumber,
+            apikey: apiKey,
+            apisessionid: apiSessionId,
+        }
+        const response = await this.callApi<DnsRecordsResponseData>('infoDnsRecords', payload)
         if(!response) return false
         return response.responsedata
     }
