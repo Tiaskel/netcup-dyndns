@@ -12,13 +12,18 @@ export default function parseDomains(domainString: string) {
         const parts = fullDomain.split('.').reverse()
 
         const primaryDomain = `${parts[1]}.${parts[0]}`
-        const subdomain = parts.slice(2).reverse().join('.') || '*'
+        const subdomain = parts.slice(2).reverse().join('.') || null
 
         if (!domainStructure[primaryDomain]) {
             domainStructure[primaryDomain] = { subdomains: new Set() }
         }
 
-        domainStructure[primaryDomain].subdomains.add(subdomain)
+        if (!subdomain) {
+            domainStructure[primaryDomain].subdomains.add('*')
+            domainStructure[primaryDomain].subdomains.add('@')
+        } else {
+            domainStructure[primaryDomain].subdomains.add(subdomain)
+        }
     })
 
     return domainStructure
