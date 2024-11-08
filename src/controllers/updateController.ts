@@ -1,6 +1,7 @@
 import {Request, Response} from 'express'
 import parseDomains from '../utils/parseDomains'
 import {DnsRecord, RecordType} from '../types/api'
+import AppLogger from '../utils/logger'
 
 interface UpdateDnsQueryParams {
     username: string
@@ -41,6 +42,8 @@ function findOrCreateDnsRecord(
 }
 
 export default async function updateDns(req: UpdateRequest, res: Response) {
+    const log = AppLogger.getInstance()
+
     const apiKey = process.env.NETCUP_API_KEY
     const apiPw = process.env.NETCUP_API_PASSWORD
     const customerId = process.env.NETCUP_CUSTOMER_NUMBER
@@ -67,13 +70,13 @@ export default async function updateDns(req: UpdateRequest, res: Response) {
 
     const sessionId = await req.netcupService.startSession(customerId, apiKey, apiPw)
     if(!sessionId) {
-        res.status(403).send('Session not found')
+        res.status(400).send('Could not start api session')
         return
     }
 
-
     for (const [primaryDomain, { subdomains }] of Object.entries(domains)) {
         const updatedDnsRecords: DnsRecord[] = []
+        log.debug(`Requesting DNS information for ${primaryDomain}`)
         const records = await req.netcupService.getDnsRecordsInfo(primaryDomain, customerId, apiKey, sessionId)
 
         if (records) {
@@ -91,9 +94,15 @@ export default async function updateDns(req: UpdateRequest, res: Response) {
         }
 
         if (updatedDnsRecords.length > 0) {
+            log.debug('Updating DNS records')
             const success = await req.netcupService.updateDnsRecords(primaryDomain, customerId, apiKey, sessionId, {
                 dnsrecords: updatedDnsRecords,
             })
+            if(success) {
+                log.info('Successfully updated DNS records')
+            } else {
+                log.error('Could not update DNS records')
+            }
         }
     }
 

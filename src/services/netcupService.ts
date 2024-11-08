@@ -1,7 +1,12 @@
 import {Action, ApiResponse, DnsRecord, DnsRecordSet, DnsZoneResponseData, LoginResponseData} from '../types/api'
+import AppLogger from '../utils/logger'
+import Logger from '@ptkdev/logger'
 
 export default class NetcupService {
+    private log: Logger
+
     constructor() {
+        this.log = AppLogger.getInstance()
     }
 
     private async callApi<T>(action: Action, payload: { [key: string]: unknown }): Promise<ApiResponse<T> | null> {
@@ -20,14 +25,15 @@ export default class NetcupService {
             if (response.ok) {
                 const data = await response.json() as ApiResponse<T>
                 if (data.status === 'success') {
+                    this.log.debug(data.longmessage)
                     return data
                 }
             }
         } catch (e: unknown) {
             if (e instanceof Error) {
-                console.error(`Error occurred while fetching the API: ${e.message}`)
+                this.log.error(`Error occurred while fetching the API: ${e.message}`)
             } else {
-                console.error(`Unknown error occurred while fetching the API: ${e}`)
+                this.log.error(`Unknown error occurred while fetching the API: ${e}`)
             }
         }
         return null
