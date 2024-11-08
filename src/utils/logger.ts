@@ -1,4 +1,5 @@
 import Logger from '@ptkdev/logger'
+import config from '../config'
 
 export default class AppLogger {
     private static instance: Logger
@@ -10,7 +11,7 @@ export default class AppLogger {
             AppLogger.instance = new Logger({
                 language: 'en',
                 colors: true,
-                debug: true,
+                debug: config.logger.debug,
                 info: true,
                 warning: true,
                 error: true,

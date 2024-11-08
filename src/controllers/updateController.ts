@@ -2,6 +2,7 @@ import {Request, Response} from 'express'
 import parseDomains from '../utils/parseDomains'
 import {DnsRecord, RecordType} from '../types/api'
 import AppLogger from '../utils/logger'
+import config from '../config'
 
 interface UpdateDnsQueryParams {
     username: string
@@ -43,15 +44,14 @@ function findOrCreateDnsRecord(
 
 export default async function updateDns(req: UpdateRequest, res: Response) {
     const log = AppLogger.getInstance()
-
-    const apiKey = process.env.NETCUP_API_KEY
-    const apiPw = process.env.NETCUP_API_PASSWORD
-    const customerId = process.env.NETCUP_CUSTOMER_NUMBER
-
-    if(!req.netcupService || !apiKey || !apiPw || !customerId) {
-        res.status(400).send('Credentials not set')
+    if(!req.netcupService) {
+        res.status(500).send('API service not available')
         return
     }
+
+    const apiKey = config.api.key
+    const apiPw = config.api.password
+    const customerId = config.api.customerId
 
     const ipv4 = req.query.ipv4
     const ipv6 = req.query.ipv6
@@ -103,12 +103,14 @@ export default async function updateDns(req: UpdateRequest, res: Response) {
             } else {
                 log.error('Could not update DNS records')
             }
+        } else {
+            log.debug('DNS information is already up to date')
         }
     }
 
 
     await req.netcupService.endSession(customerId, apiKey, sessionId)
-    res.send('Foo')
+    res.sendStatus(204)
 }
 
 
