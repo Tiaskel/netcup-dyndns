@@ -1,9 +1,11 @@
 import NetcupService from '../services/netcupService'
+import AuthService from '../services/authService'
 
 declare global {
     namespace Express {
         interface Request {
-            netcupService?: NetcupService;
+            authService: AuthService
+            netcupService: NetcupService;
         }
     }
 }

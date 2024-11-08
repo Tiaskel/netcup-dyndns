@@ -44,9 +44,12 @@ function findOrCreateDnsRecord(
 
 export default async function updateDns(req: UpdateRequest, res: Response) {
     const log = AppLogger.getInstance()
-    if(!req.netcupService) {
-        res.status(500).send('API service not available')
-        return
+
+    const username = req.query.username
+    const password = req.query.password
+
+    if(!username || !password || !req.authService.isAuthorized(username, password)) {
+        return res.status(403).send('Unauthorized')
     }
 
     const apiKey = config.api.key
