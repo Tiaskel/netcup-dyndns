@@ -1,51 +1,10 @@
-type Action = 'login' | 'logout' | 'infoDnsZone' | 'infoDnsRecords'
-
-type Status = 'error' | 'started' | 'pending' | 'warning' | 'success'
-
-type ApiResponse<T = { [key: string]: string }> = {
-    serverrequestid: string
-    clientrequestid: string | null
-    action: Action
-    status: Status
-    statuscode: number
-    shortmessage: string
-    longmessage: string
-    responsedata: T
-}
-
-type LoginResponseData = {
-    apisessionid: string
-}
-
-type DnsZoneResponseData = {
-    name: string
-    ttl: string
-    serial: string
-    refresh: string
-    retry: string
-    expire: string
-    dnssecstatus: boolean
-}
-
-type DnsRecord = {
-    id: string
-    hostname: string
-    type: string
-    priority: string
-    destination: string
-    deleterecord: boolean
-    state: 'yes' | 'no'
-}
-
-type DnsRecordsResponseData = {
-    dnsrecords: DnsRecord[]
-}
+import {Action, ApiResponse, DnsRecord, DnsRecordSet, DnsZoneResponseData, LoginResponseData} from '../types/api'
 
 export default class NetcupService {
     constructor() {
     }
 
-    private async callApi<T>(action: Action, payload: { [key: string]: string }): Promise<ApiResponse<T> | null> {
+    private async callApi<T>(action: Action, payload: { [key: string]: unknown }): Promise<ApiResponse<T> | null> {
         try {
             const response = await fetch('https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON', {
                 method: 'POST',
@@ -110,15 +69,27 @@ export default class NetcupService {
         return response.responsedata
     }
 
-    async getDnsRecordsInfo(domainName: string, customerNumber: string, apiKey: string, apiSessionId: string): Promise<DnsRecordsResponseData | false> {
+    async getDnsRecordsInfo(domainName: string, customerNumber: string, apiKey: string, apiSessionId: string): Promise<DnsRecord[] | false> {
         const payload = {
             domainname: domainName,
             customernumber: customerNumber,
             apikey: apiKey,
             apisessionid: apiSessionId,
         }
-        const response = await this.callApi<DnsRecordsResponseData>('infoDnsRecords', payload)
+        const response = await this.callApi<DnsRecordSet>('infoDnsRecords', payload)
         if(!response) return false
-        return response.responsedata
+        return response.responsedata.dnsrecords
+    }
+
+    async updateDnsRecords(domainName: string, customerNumber: string, apiKey: string, apiSessionId: string, records: DnsRecordSet): Promise<boolean> {
+        const payload = {
+            domainname: domainName,
+            customernumber: customerNumber,
+            apikey: apiKey,
+            apisessionid: apiSessionId,
+            dnsrecordset: records,
+        }
+        const response = await this.callApi<DnsRecordSet>('updateDnsRecords', payload)
+        return !!response
     }
 }
