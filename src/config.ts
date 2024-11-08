@@ -24,7 +24,7 @@ const config = {
         password: getEnvVar('AUTH_PASSWORD'),
     },
     server: {
-        port: parseInt(getEnvVar('SERVER_PORT', '3000'), 10),
+        port: parseInt(getEnvVar('PORT', '3000'), 10),
     },
     logger: {
         debug: getEnvVar('DEBUG', 'false') === 'true',
