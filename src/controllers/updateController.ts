@@ -42,14 +42,15 @@ function findOrCreateDnsRecord(
     }
 }
 
-export default async function updateDns(req: UpdateRequest, res: Response) {
+export default async function updateDns(req: UpdateRequest, res: Response): Promise<void> {
     const log = AppLogger.getInstance()
 
     const username = req.query.username
     const password = req.query.password
 
     if(!username || !password || !req.authService.isAuthorized(username, password)) {
-        return res.status(403).send('Unauthorized')
+        res.status(403).send('Unauthorized')
+        return
     }
 
     const apiKey = config.api.key
