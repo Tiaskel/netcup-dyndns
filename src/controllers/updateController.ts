@@ -67,14 +67,14 @@ export default async function updateDns(req: UpdateRequest, res: Response): Prom
     }
 
     const rawPrefix = req.query.ipv6prefix
-    // Remove subnet mask
-    const ipv6Prefix = rawPrefix ? rawPrefix.split('/')[0] : undefined
+    // Remove subnet mask and trailing colons
+    const ipv6Prefix = rawPrefix ? rawPrefix.split('/')[0].replace(/:+$/, '') : undefined
 
     let ipv6ToSet: string|undefined
     if(ipv6Prefix && ipv6) {
         // Remove leading colons from ipv6 suffix
         const suffix = ipv6.replace(/^:+/, '')
-        const constructedIpV6 = `${ipv6Prefix.endsWith(':') ? ipv6Prefix.slice(0, -1) : ipv6Prefix}:${suffix}`
+        const constructedIpV6 = `${ipv6Prefix}:${suffix}`
         if(!isValidIPv6(constructedIpV6)) {
             res.status(400).send('Invalid constructed ipv6 address')
             return
