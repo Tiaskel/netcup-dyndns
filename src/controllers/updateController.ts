@@ -3,13 +3,15 @@ import parseDomains from '../utils/parseDomains'
 import {DnsRecord, RecordType} from '../types/api'
 import AppLogger from '../utils/logger'
 import config from '../config'
+import {isValidIPv6} from '../services/validation'
 
 interface UpdateDnsQueryParams {
     username: string
     password: string
     domains: string
-    ipv4: string
-    ipv6: string
+    ipv4?: string
+    ipv6?: string
+    ipv6prefix?: string
 }
 
 type UpdateRequest = Request<unknown,unknown,unknown,UpdateDnsQueryParams>
@@ -64,6 +66,28 @@ export default async function updateDns(req: UpdateRequest, res: Response): Prom
         return
     }
 
+    const rawPrefix = req.query.ipv6prefix
+    // Remove subnet mask
+    const ipv6Prefix = rawPrefix ? rawPrefix.split('/')[0] : undefined
+
+    let ipv6ToSet: string|undefined
+    if(ipv6Prefix && ipv6) {
+        // Remove leading colons from ipv6 suffix
+        const suffix = ipv6.replace(/^:+/, '')
+        const constructedIpV6 = `${ipv6Prefix.endsWith(':') ? ipv6Prefix.slice(0, -1) : ipv6Prefix}:${suffix}`
+        if(!isValidIPv6(constructedIpV6)) {
+            res.status(400).send('Invalid constructed ipv6 address')
+            return
+        }
+        ipv6ToSet = constructedIpV6
+    } else if(ipv6) {
+        if(!isValidIPv6(ipv6)) {
+            res.status(400).send('Invalid ipv6 address')
+            return
+        }
+        ipv6ToSet = ipv6
+    }
+
     const domainQuery = req.query.domains
     if(!domainQuery) {
         res.status(400).send('Domains not set')
@@ -90,8 +114,8 @@ export default async function updateDns(req: UpdateRequest, res: Response): Prom
                     if (ipv4Record) updatedDnsRecords.push(ipv4Record)
                 }
 
-                if (ipv6) {
-                    const ipv6Record = findOrCreateDnsRecord(subdomain, records, 'AAAA', ipv6)
+                if (ipv6ToSet) {
+                    const ipv6Record = findOrCreateDnsRecord(subdomain, records, 'AAAA', ipv6ToSet)
                     if (ipv6Record) updatedDnsRecords.push(ipv6Record)
                 }
             }
